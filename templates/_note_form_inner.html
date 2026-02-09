@@ -1,4 +1,4 @@
-{% comment %}공통 시음 노트 폼 — 5단계 페이지네이션, 모달/풀페이지 공용 {% endcomment %}
+{% comment %}공통 시음 노트 폼 — 모델: wines.Wine(로그인 무관), notes.TastingNote(user FK). 5단계, 별 평점, 저장 버튼 {% endcomment %}
 <div id="form-guest-notice" class="form-guest-notice" style="display: none;">
     저장하려면 로그인이 필요합니다. <a href="{% url 'login' %}">로그인</a> · <a href="{% url 'register' %}">회원가입</a>
 </div>
@@ -15,13 +15,29 @@
 
     <div class="step-content active" data-step="1">
         <div class="form-section">
-            <div class="form-section-title">기본 정보</div>
+            <h3 class="form-section-title">기본 와인 정보</h3>
             <div class="form-group">
-                <label for="wine-select">와인 *</label>
+                <label for="wine-select">와인 선택 *</label>
                 <select name="wine" id="wine-select" required>
-                    <option value="">— 와인 선택 —</option>
+                    <option value="">— 와인을 선택하세요 —</option>
                 </select>
-                <p id="wine-login-hint" class="text-muted" style="margin-top: 6px; font-size: 12px; display: none;">로그인하면 와인 목록에서 선택할 수 있습니다.</p>
+                <p id="wine-empty-msg" class="text-muted" style="margin-top: 6px; font-size: 12px; display: none;">등록된 와인이 없습니다. 관리자에게 문의하세요.</p>
+            </div>
+            <div class="form-group">
+                <label class="label-block">와인 종류 (필터)</label>
+                <div class="wine-type-grid" id="wine-type-filter">
+                    <button type="button" class="wine-type-btn active" data-type="">전체</button>
+                    <button type="button" class="wine-type-btn" data-type="red">🍷 레드</button>
+                    <button type="button" class="wine-type-btn" data-type="white">🥂 화이트</button>
+                    <button type="button" class="wine-type-btn" data-type="sparkling">✨ 스파클링</button>
+                    <button type="button" class="wine-type-btn" data-type="rose">🌸 로제</button>
+                    <button type="button" class="wine-type-btn" data-type="champagne">🍾 샴페인</button>
+                    <button type="button" class="wine-type-btn" data-type="dessert">🍯 디저트</button>
+                    <button type="button" class="wine-type-btn" data-type="fortified">🌟 주정강화</button>
+                    <button type="button" class="wine-type-btn" data-type="orange">🟠 오렌지</button>
+                    <button type="button" class="wine-type-btn" data-type="natural">🌿 내추럴</button>
+                    <button type="button" class="wine-type-btn" data-type="other">🍇 기타</button>
+                </div>
             </div>
             <div class="form-row-2">
                 <div class="form-group">
@@ -29,8 +45,15 @@
                     <input type="date" name="tasted_date" id="tasted_date" required>
                 </div>
                 <div class="form-group">
-                    <label for="rating">평점 (1~5) *</label>
-                    <input type="number" name="rating" id="rating" min="1" max="5" value="3" required>
+                    <label class="label-block">평점 (1~5) *</label>
+                    <div class="star-rating" id="star-rating" role="slider" aria-valuenow="3" aria-valuemin="1" aria-valuemax="5" tabindex="0">
+                        <span class="star" data-value="1">★</span>
+                        <span class="star" data-value="2">★</span>
+                        <span class="star" data-value="3">★</span>
+                        <span class="star" data-value="4">★</span>
+                        <span class="star" data-value="5">★</span>
+                    </div>
+                    <input type="hidden" name="rating" id="rating" value="3" required>
                 </div>
             </div>
             <div class="form-group">
@@ -137,7 +160,7 @@
     <div class="form-step-actions">
         <button type="button" class="btn btn-secondary btn-step-prev" style="display: none;">← 이전</button>
         <button type="button" class="btn btn-primary btn-step-next">다음 →</button>
-        <button type="submit" class="btn btn-primary btn-step-submit" style="display: none;">저장</button>
+        <button type="submit" class="btn btn-primary btn-step-submit btn-save" style="display: none;">💾 저장</button>
         <button type="button" class="btn btn-secondary btn-close-modal" style="display: none;">취소</button>
         <a href="{% url 'home' %}" class="btn btn-secondary form-cancel-link" style="display: none;">취소</a>
     </div>
@@ -151,7 +174,7 @@
     const formSuccess = document.getElementById('form-success');
     const formError = document.getElementById('form-error');
     const wineSelect = document.getElementById('wine-select');
-    const wineLoginHint = document.getElementById('wine-login-hint');
+    const wineEmptyMsg = document.getElementById('wine-empty-msg');
     const modal = document.getElementById('note-form-modal');
     const isInModal = modal && modal.contains(formEl);
 
@@ -162,6 +185,8 @@
     var btnPrev = formEl.querySelector('.btn-step-prev');
     var btnNext = formEl.querySelector('.btn-step-next');
     var btnSubmit = formEl.querySelector('.btn-step-submit');
+
+    var allWines = [];
 
     function showStep(n) {
         currentStep = n;
@@ -201,31 +226,77 @@
         return h;
     }
 
+    function loadWines() {
+        fetch('/api/wines/', { headers: { 'Content-Type': 'application/json' } })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                allWines = data.results || data || [];
+                if (Array.isArray(data) && data.length) allWines = data;
+                renderWineSelect('');
+                if (wineEmptyMsg) wineEmptyMsg.style.display = allWines.length ? 'none' : 'block';
+            })
+            .catch(function() {
+                allWines = [];
+                if (wineEmptyMsg) wineEmptyMsg.style.display = 'block';
+            });
+    }
+    function renderWineSelect(filterType) {
+        if (!wineSelect) return;
+        var currentVal = wineSelect.value;
+        wineSelect.innerHTML = '<option value="">— 와인을 선택하세요 —</option>';
+        allWines.filter(function(w) {
+            return !filterType || (w.type || '').toLowerCase() === filterType;
+        }).forEach(function(w) {
+            var opt = document.createElement('option');
+            opt.value = w.id;
+            opt.textContent = (w.name || '') + (w.vintage ? ' (' + w.vintage + ')' : '') + (w.winery ? ' · ' + w.winery : '');
+            opt.dataset.type = (w.type || '').toLowerCase();
+            wineSelect.appendChild(opt);
+        });
+        if (currentVal && wineSelect.querySelector('option[value="' + currentVal + '"]')) wineSelect.value = currentVal;
+    }
+
+    var typeFilter = document.getElementById('wine-type-filter');
+    if (typeFilter) {
+        typeFilter.querySelectorAll('.wine-type-btn').forEach(function(btn) {
+            btn.onclick = function() {
+                typeFilter.querySelectorAll('.wine-type-btn').forEach(function(b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                renderWineSelect(btn.getAttribute('data-type') || '');
+            };
+        });
+    }
+
+    var starRating = document.getElementById('star-rating');
+    var ratingInput = document.getElementById('rating');
+    if (starRating && ratingInput) {
+        function setStars(v) {
+            var val = parseInt(v, 10) || 0;
+            ratingInput.value = val;
+            starRating.setAttribute('aria-valuenow', val);
+            starRating.querySelectorAll('.star').forEach(function(s) {
+                s.classList.toggle('filled', parseInt(s.getAttribute('data-value'), 10) <= val);
+            });
+        }
+        starRating.querySelectorAll('.star').forEach(function(star) {
+            star.onclick = function() { setStars(star.getAttribute('data-value')); };
+        });
+        starRating.addEventListener('keydown', function(e) {
+            var v = parseInt(ratingInput.value, 10) || 3;
+            if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { e.preventDefault(); setStars(Math.min(5, v + 1)); }
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { e.preventDefault(); setStars(Math.max(1, v - 1)); }
+        });
+        setStars(3);
+    }
+
     var today = new Date().toISOString().slice(0, 10);
     var dateInput = formEl.querySelector('[name="tasted_date"]');
     if (dateInput) dateInput.value = today;
+
     if (!access) {
         if (guestNotice) guestNotice.style.display = 'block';
-        if (wineSelect) {
-            wineSelect.innerHTML = '<option value="">— 로그인 후 와인 목록에서 선택 —</option>';
-            wineSelect.removeAttribute('required');
-        }
-        if (wineLoginHint) wineLoginHint.style.display = 'block';
-    } else {
-        fetch('/api/wines/', { headers: authHeaders() })
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                var list = data.results || data || [];
-                if (!wineSelect) return;
-                list.forEach(function(w) {
-                    var opt = document.createElement('option');
-                    opt.value = w.id;
-                    opt.textContent = (w.name || '') + (w.vintage ? ' (' + w.vintage + ')' : '');
-                    wineSelect.appendChild(opt);
-                });
-            })
-            .catch(function() {});
     }
+    loadWines();
 
     ['appearance_intensity','aroma_intensity','body','acidity','tannin','sweetness'].forEach(function(name) {
         var input = formEl.querySelector('[name="' + name + '"]');
@@ -293,6 +364,11 @@
                 formEl.reset();
                 var di = formEl.querySelector('[name="tasted_date"]');
                 if (di) di.value = today;
+                if (ratingInput) ratingInput.value = '3';
+                if (starRating) starRating.querySelectorAll('.star').forEach(function(s) {
+                    s.classList.toggle('filled', parseInt(s.getAttribute('data-value'), 10) <= 3);
+                });
+                starRating && starRating.setAttribute('aria-valuenow', '3');
                 showStep(1);
                 if (isInModal && modal) {
                     modal.style.display = 'none';

@@ -233,6 +233,19 @@
         .note-form-steps .form-step-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); }
         .note-form-steps .taste-sliders { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
         .note-form-steps .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .note-form-steps .form-section-title { font-size: 1rem; }
+        .note-form-steps h3.form-section-title { margin-bottom: 0.75rem; }
+        .label-block { display: block; margin-bottom: 6px; }
+        .wine-type-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+        .wine-type-btn { padding: 10px 14px; border-radius: 10px; border: 2px solid var(--border); background: #fff; color: var(--text-secondary); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .wine-type-btn:hover { border-color: var(--wine-light); color: var(--text-primary); }
+        .wine-type-btn.active { background: linear-gradient(135deg, var(--wine-secondary) 0%, var(--wine-primary) 100%); border-color: var(--wine-primary); color: #fff; }
+        .star-rating { display: inline-flex; gap: 4px; font-size: 28px; line-height: 1; cursor: pointer; }
+        .star-rating .star { color: var(--border); transition: color 0.15s; }
+        .star-rating .star:hover { color: var(--gold); }
+        .star-rating .star.filled { color: var(--gold); }
+        .star-rating:focus { outline: none; }
+        .btn-save { font-size: 16px; padding: 14px 24px; }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
