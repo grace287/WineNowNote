@@ -1,0 +1,9 @@
+# WineNowNote — 공통 의존성 (모든 환경)
+# Python 3.10+
+
+Django>=4.2,<5.0
+djangorestframework>=3.14
+djangorestframework-simplejwt>=5.3
+drf-spectacular>=0.27
+django-cors-headers>=4.3
+Pillow>=10.0

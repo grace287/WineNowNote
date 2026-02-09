@@ -1,0 +1,1 @@
+# WineNowNote Django config

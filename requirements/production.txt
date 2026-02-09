@@ -1,0 +1,8 @@
+# 운영 환경 — base + 운영용
+-r base.txt
+
+# WSGI 서버
+gunicorn>=21.0
+
+# PostgreSQL (config.settings.production 사용 시)
+psycopg2-binary>=2.9
