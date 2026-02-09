@@ -40,7 +40,7 @@ class WineViewSet(viewsets.ReadOnlyModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         """상세 시 tasting_notes_count, average_rating 포함"""
         instance = self.get_object()
-        from notes.models import TastingNote
+        from apps.notes.models import TastingNote
 
         agg = TastingNote.objects.filter(wine=instance).aggregate(
             count=Count("id"),

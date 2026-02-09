@@ -1,0 +1,45 @@
+# WineNowNote CD — main 브랜치 푸시 시 배포 트리거 (플레이스홀더)
+# 실제 배포 단계는 호스팅(Railway, Render, EC2 등)에 맞게 수정
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/production.txt
+
+      - name: Django check (production settings)
+        env:
+          DJANGO_ENV: production
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+          ALLOWED_HOSTS: .example.com
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+        run: python manage.py check
+        continue-on-error: true
+
+      # 여기에 실제 배포 단계 추가 예시:
+      # - name: Deploy to Railway
+      #   run: ...
+      # 또는 SSH로 서버 접속 후 git pull, migrate, gunicorn 재시작 등
+      - name: Deploy placeholder
+        run: echo "배포 파이프라인 연결 후 이 단계를 교체하세요."

@@ -1,107 +1,126 @@
 """
 대시보드 API (PRD 9.4)
-- GET /api/dashboard/stats?start_date=&end_date=
-- GET /api/dashboard/calendar?year=&month=
+- GET /api/dashboard/stats/ — 전체 통계 (start_date, end_date)
+- GET /api/dashboard/calendar/ — 달력 (year, month)
+- GET /api/dashboard/top-wines/ — Top 10 와인 (sort=count|rating)
 """
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.db.models import Count, Avg
+from collections import defaultdict
+from datetime import timedelta
+
+from django.db.models import Avg, Count
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
-from datetime import timedelta
-from notes.models import TastingNote
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from apps.notes.models import TastingNote
+from apps.wines.models import Wine
 
 
 class StatsView(APIView):
-    """GET /api/dashboard/stats — 전체 통계"""
-    permission_classes = (IsAuthenticated,)
+    """
+    대시보드 전체 통계.
+    GET /api/dashboard/stats/
+    Query: start_date, end_date (선택)
+    """
+
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         user = request.user
-        start = request.query_params.get("start_date")
-        end = request.query_params.get("end_date")
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+
         qs = TastingNote.objects.filter(user=user)
-        if start:
-            qs = qs.filter(tasted_date__gte=start)
-        if end:
-            qs = qs.filter(tasted_date__lte=end)
+        if start_date:
+            qs = qs.filter(tasted_date__gte=start_date)
+        if end_date:
+            qs = qs.filter(tasted_date__lte=end_date)
 
         total_tastings = qs.count()
         total_wines = qs.values("wine").distinct().count()
-        avg_rating = qs.aggregate(Avg("rating"))["rating__avg"]
-        avg_rating = round(float(avg_rating), 2) if avg_rating else None
+        avg_result = qs.aggregate(Avg("rating"))["rating__avg"]
+        average_rating = round(float(avg_result), 2) if avg_result is not None else None
 
-        type_dist = dict(
-            qs.values("wine__type").annotate(c=Count("id")).values_list("wine__type", "c")
+        type_stats = (
+            qs.values("wine__type")
+            .annotate(count=Count("id"))
+            .order_by("-count")
         )
-        rating_dist = dict(
-            qs.values("rating").annotate(c=Count("id")).values_list("rating", "c")
+        type_distribution = {row["wine__type"]: row["count"] for row in type_stats}
+        most_tasted_type = (
+            type_stats.first()["wine__type"] if type_stats else None
         )
 
-        # 월별 트렌드 (최근 12개월)
-        if not end:
-            end = timezone.now().date()
-        if not start:
-            start = end - timedelta(days=365)
-        monthly = (
-            TastingNote.objects.filter(user=user, tasted_date__gte=start, tasted_date__lte=end)
+        region_stats = (
+            qs.values("wine__region")
+            .annotate(count=Count("id"))
+            .exclude(wine__region="")
+            .order_by("-count")
+        )
+        most_tasted_region = (
+            region_stats.first()["wine__region"] if region_stats else None
+        )
+
+        twelve_months_ago = timezone.now().date() - timedelta(days=365)
+        monthly_qs = (
+            qs.filter(tasted_date__gte=twelve_months_ago)
             .annotate(month=TruncMonth("tasted_date"))
             .values("month")
             .annotate(count=Count("id"))
             .order_by("month")
         )
-        monthly_trend = [{"month": str(m["month"])[:7], "count": m["count"]} for m in monthly]
+        monthly_trend = [
+            {"month": str(row["month"])[:7], "count": row["count"]}
+            for row in monthly_qs
+        ]
 
-        most_type = (
-            qs.values("wine__type")
-            .annotate(c=Count("id"))
-            .order_by("-c")
-            .first()
-        )
-        most_region = (
-            qs.values("wine__region")
-            .annotate(c=Count("id"))
-            .order_by("-c")
-            .exclude(wine__region="")
-            .first()
-        )
+        rating_distribution = {
+            str(i): qs.filter(rating=i).count() for i in range(1, 6)
+        }
 
         return Response(
             {
                 "total_tastings": total_tastings,
                 "total_wines": total_wines,
-                "average_rating": avg_rating,
-                "most_tasted_type": most_type["wine__type"] if most_type else None,
-                "most_tasted_region": most_region["wine__region"] if most_region else None,
+                "average_rating": average_rating,
+                "most_tasted_type": most_tasted_type,
+                "most_tasted_region": most_tasted_region,
                 "monthly_trend": monthly_trend,
-                "type_distribution": type_dist,
-                "rating_distribution": rating_dist,
+                "type_distribution": type_distribution,
+                "rating_distribution": rating_distribution,
             }
         )
 
 
 class CalendarView(APIView):
-    """GET /api/dashboard/calendar?year=&month= — 달력 데이터"""
-    permission_classes = (IsAuthenticated,)
+    """
+    달력용 데이터.
+    GET /api/dashboard/calendar/?year=&month=
+    """
+
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        user = request.user
         year = int(request.query_params.get("year", timezone.now().year))
         month = int(request.query_params.get("month", timezone.now().month))
+
         qs = (
             TastingNote.objects.filter(
-                user=request.user,
+                user=user,
                 tasted_date__year=year,
                 tasted_date__month=month,
             )
             .select_related("wine")
             .order_by("tasted_date")
         )
-        from collections import defaultdict
 
         by_date = defaultdict(list)
         for note in qs:
-            by_date[str(note.tasted_date)].append(
+            date_str = note.tasted_date.strftime("%Y-%m-%d")
+            by_date[date_str].append(
                 {
                     "id": note.id,
                     "wine_name": note.wine.name,
@@ -109,8 +128,69 @@ class CalendarView(APIView):
                     "photo": note.photos[0] if note.photos else None,
                 }
             )
+
         days = [
             {"date": date, "count": len(notes), "notes": notes}
             for date, notes in sorted(by_date.items())
         ]
         return Response({"year": year, "month": month, "days": days})
+
+
+class TopWinesView(APIView):
+    """
+    내가 가장 많이/높게 평가한 와인 Top 10.
+    GET /api/dashboard/top-wines/?sort=count (기본) | sort=rating
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        sort_by = request.query_params.get("sort", "count")
+
+        notes_qs = TastingNote.objects.filter(user=user)
+
+        if sort_by == "rating":
+            top_rows = (
+                notes_qs.values("wine")
+                .annotate(
+                    avg_rating=Avg("rating"),
+                    count=Count("id"),
+                )
+                .filter(count__gte=1)
+                .order_by("-avg_rating", "-count")[:10]
+            )
+        else:
+            top_rows = (
+                notes_qs.values("wine")
+                .annotate(
+                    count=Count("id"),
+                    avg_rating=Avg("rating"),
+                )
+                .order_by("-count", "-avg_rating")[:10]
+            )
+
+        wine_ids = [row["wine"] for row in top_rows]
+        wines = {w.id: w for w in Wine.objects.filter(pk__in=wine_ids)}
+
+        results = []
+        for row in top_rows:
+            wine = wines.get(row["wine"])
+            if not wine:
+                continue
+            results.append(
+                {
+                    "wine": {
+                        "id": wine.id,
+                        "name": wine.name,
+                        "type": wine.type,
+                        "region": wine.region or "",
+                        "country": wine.country or "",
+                        "vintage": wine.vintage,
+                        "winery": wine.winery or "",
+                    },
+                    "count": row.get("count", 0),
+                    "avg_rating": round(float(row.get("avg_rating") or 0), 2),
+                }
+            )
+        return Response(results)

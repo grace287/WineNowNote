@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}WineNowNote{% endblock %}</title>
+    <style>
+        :root {
+            --wine-primary: #8B1E3F;
+            --wine-secondary: #722F37;
+            --wine-light: #C9A6A6;
+            --background: #FFFFFF;
+            --surface: #F8F8F8;
+            --border: #E5E5E5;
+            --text-primary: #1A1A1A;
+            --text-secondary: #666666;
+            --text-tertiary: #999999;
+            --gold: #D4AF37;
+            --success: #2D6E3F;
+            --error: #C1292E;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+            --shadow-wine: 0 8px 16px rgba(139, 30, 63, 0.25);
+            --space-2: 8px;
+            --space-4: 16px;
+            --space-6: 24px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+        .nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-4) var(--space-6);
+            background: #fff;
+            border-bottom: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+        }
+        .nav-brand {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--wine-secondary);
+            text-decoration: none;
+        }
+        .nav-brand:hover { color: var(--wine-primary); }
+        .nav-links { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }
+        .nav-links a {
+            padding: 0.5rem 0.9rem;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .nav-links a:hover { color: var(--text-primary); background: var(--surface); }
+        .nav-links a.btn-nav-primary {
+            background: linear-gradient(135deg, var(--wine-secondary) 0%, var(--wine-primary) 100%);
+            color: #fff;
+        }
+        .nav-links a.btn-nav-primary:hover { box-shadow: var(--shadow-wine); }
+        main { max-width: 920px; margin: 0 auto; padding: var(--space-6); min-height: calc(100vh - 140px); }
+        .footer {
+            text-align: center;
+            padding: var(--space-4);
+            font-size: 12px;
+            color: var(--text-tertiary);
+            border-top: 1px solid var(--border);
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 20px;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .btn:active { transform: translateY(0); }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--wine-secondary) 0%, var(--wine-primary) 100%);
+            color: #fff;
+        }
+        .btn-primary:hover { box-shadow: var(--shadow-wine); }
+        .btn-secondary {
+            background: #fff;
+            color: var(--text-primary);
+            border: 2px solid var(--border);
+        }
+        .btn-secondary:hover { border-color: var(--wine-light); background: #FFF8F8; }
+        .card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: var(--space-6);
+            box-shadow: var(--shadow-md);
+        }
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block;
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 15px;
+            background: #fff;
+            color: var(--text-primary);
+            transition: all 0.2s;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--wine-primary);
+            box-shadow: 0 0 0 3px rgba(139, 30, 63, 0.1);
+        }
+        .form-group input::placeholder,
+        .form-group textarea::placeholder { color: var(--text-tertiary); }
+        .form-group textarea { min-height: 90px; resize: vertical; }
+        .alert { padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; font-size: 14px; }
+        .alert-error { background: #FEE; border: 1px solid var(--error); color: var(--error); }
+        .alert-success { background: #E8F5E9; border: 1px solid var(--success); color: var(--success); }
+        .text-muted { color: var(--text-secondary); font-size: 14px; }
+        a.link { color: var(--wine-primary); text-decoration: none; font-weight: 600; }
+        a.link:hover { text-decoration: underline; }
+        .auth-page {
+            min-height: calc(100vh - 140px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--wine-secondary) 0%, var(--wine-primary) 100%);
+            margin: 0 calc(-1 * var(--space-6));
+            padding: 40px 20px;
+        }
+        .auth-container {
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+            padding: 40px;
+            max-width: 450px;
+            width: 100%;
+        }
+        .note-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .note-modal-box {
+            background: #fff;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            max-width: 580px;
+            width: 100%;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .note-modal-header {
+            padding: var(--space-4) var(--space-6);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .note-modal-header h3 { margin: 0; font-size: 1.2rem; font-weight: 600; }
+        .note-modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-tertiary);
+            line-height: 1;
+            padding: 0 4px;
+        }
+        .note-modal-close:hover { color: var(--text-primary); }
+        .note-modal-body {
+            overflow-y: auto;
+            padding: var(--space-4) var(--space-6) var(--space-6);
+        }
+        .note-form-inner .form-section { margin-bottom: 1.25rem; }
+        .note-form-inner .form-section-title { font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid var(--border); }
+        .note-form-inner .form-group { margin-bottom: 14px; }
+        .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .scale-row-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .scale-row-wrap-4 { grid-template-columns: repeat(4, 1fr); }
+        .scale-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .scale-row input[type="range"] { width: 80px; accent-color: var(--wine-primary); }
+        .scale-row span { min-width: 1.5rem; font-size: 13px; color: var(--text-secondary); }
+        .form-guest-notice { padding: 10px 14px; background: #FFF8F0; border: 1px solid var(--wine-light); border-radius: var(--radius-sm); margin-bottom: 12px; font-size: 13px; color: var(--text-secondary); }
+        .form-guest-notice a { color: var(--wine-primary); font-weight: 600; }
+        .note-form-steps .steps-bar { display: flex; justify-content: space-between; gap: 4px; margin-bottom: 1.5rem; padding: 0 4px; }
+        .note-form-steps .step { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; flex: 1; max-width: 80px; }
+        .note-form-steps .step-num { width: 28px; height: 28px; border-radius: 50%; background: var(--surface); color: var(--text-tertiary); font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .note-form-steps .step-label { font-size: 11px; color: var(--text-tertiary); text-align: center; }
+        .note-form-steps .step.active .step-num { background: linear-gradient(135deg, var(--wine-secondary) 0%, var(--wine-primary) 100%); color: #fff; }
+        .note-form-steps .step.active .step-label { color: var(--text-primary); font-weight: 600; }
+        .note-form-steps .step-content { display: none; }
+        .note-form-steps .step-content.active { display: block; }
+        .note-form-steps .form-section-title { font-size: 0.95rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.75rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--border); }
+        .note-form-steps .slider-wrap { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+        .note-form-steps .slider-input { flex: 1; min-width: 0; height: 8px; accent-color: var(--wine-primary); }
+        .note-form-steps .slider-val { min-width: 24px; font-size: 14px; font-weight: 600; color: var(--wine-primary); }
+        .note-form-steps .slider-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+        .note-form-steps .slider-labels-3 { justify-content: space-between; }
+        .note-form-steps .form-step-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+        .note-form-steps .taste-sliders { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .note-form-steps .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="nav">
+        <a href="{% url 'home' %}" class="nav-brand">🍷 WineNowNote</a>
+        <div class="nav-links">
+            <a href="{% url 'home' %}">홈</a>
+            <a href="{% url 'calendar' %}">캘린더</a>
+            <a href="{% url 'tasting_note_add' %}">시음 노트 쓰기</a>
+            <a href="{% url 'login' %}" class="btn-nav-primary">로그인</a>
+            <a href="{% url 'register' %}" class="btn-nav-primary">회원가입</a>
+        </div>
+    </nav>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="footer">WineNowNote — 와인 시음 플랫폼 · 로그인 없이 둘러보기 가능</footer>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

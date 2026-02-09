@@ -1,0 +1,27 @@
+---
+description: Django·DRF 백엔드 파일 규칙 — models, views, serializers, urls
+globs: apps/**/*.py,config/**/*.py
+alwaysApply: false
+---
+
+# Django 백엔드 규칙
+
+## 모델 (apps/**/models.py)
+- `Meta`: `db_table`, `verbose_name`, `verbose_name_plural`, `ordering`, `indexes` 필요 시 명시.
+- FK: `related_name` 지정. 외부 앱 참조는 문자열 `"app_label.ModelName"`.
+- choices: 모델 클래스 위 또는 별도 상수로 정의 후 `choices=CONSTANT`, 한글 라벨 사용.
+- 마이그레이션: 필드 추가/변경 후 `makemigrations`·`migrate` 필요함을 안내.
+
+## 뷰·ViewSet
+- 인증: 필요 시 `permission_classes`, `authentication_classes` 명시.
+- queryset: 본인/공개 조건 등 필터. `get_queryset()` 오버라이드 시 유지.
+- 시리얼라이저: 목록/상세/쓰기용 구분해 `get_serializer_class()` 또는 action별 지정.
+
+## 시리얼라이저
+- `ModelSerializer` 사용. `fields`·`read_only_fields` 명시.
+- 중첩: 읽기 전용이면 `NestedSerializer(read_only=True)`. 쓰기 시 `PrimaryKeyRelatedField` 또는 별도 필드.
+- 검증: `validate_<field>`, `validate()`에서 `ValidationError` 발생. 메시지 한글 가능.
+
+## URL
+- 앱별: `path("api/<app>/", include("apps.<app>.urls"))`.
+- 루트 API prefix: `api/` (예: `/api/wines/`, `/api/tasting-notes/`).

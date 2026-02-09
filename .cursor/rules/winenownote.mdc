@@ -1,0 +1,31 @@
+---
+description: WineNowNote 프로젝트 공통 규칙 — Django, 앱 구조, PRD, 응답 언어
+alwaysApply: true
+---
+
+# WineNowNote 프로젝트 규칙
+
+## 프로젝트 개요
+- **한국 와인 시음 플랫폼** 백엔드 (Django 4.2+, DRF, JWT)
+- 요구사항·기능 정의는 **PRD.md** 기준으로 맞춘다.
+
+## 디렉터리·앱 구조
+- 설정: `config/` (Django 설정 루트). `config/settings/` 아래 `base.py`, `development.py`, `production.py` 분리. `DJANGO_ENV`로 환경 선택.
+- 앱: `apps/` 아래에만 둔다. `apps.users`, `apps.wines`, `apps.notes`, `apps.dashboard`.
+- import 시 앱은 `apps.<appname>` 사용 (예: `from apps.wines.models import Wine`).
+- 의존성: `requirements/base.txt`, `requirements/development.txt`, `requirements/production.txt`. 루트 `requirements.txt`는 개발용 참조.
+
+## 코드 스타일
+- Python: UTF-8, 줄 끝 LF. 문자열은 쌍따옴표 우선.
+- 모델: `verbose_name` 한글 사용. `db_table`, `Meta` 정리. choices는 모델/상단 상수로 정의.
+- 시리얼라이저: 목록/상세/생성·수정 분리. `read_only`·`read_only_fields` 명시. 검증은 `validate_<field>` 또는 `validate()`.
+- API: REST, JWT 인증. 앱별 URL은 `apps.<app>.urls`에 두고 `config/urls.py`에서 include.
+
+## 데이터·모델 관계
+- **와인**: `apps.wines.models.Wine` — 시음 노트에서 FK로 참조. 와인 마스터만 저장.
+- **시음 노트**: `apps.notes.models.TastingNote` — `user`, `wine`, `template` FK. 외관/아로마/맛·메모·사진 등 시음 당시 평가만 저장.
+- **템플릿**: `apps.notes.models.Template` — 사용자별 커스텀 필드 정의. `fields`는 `{"fields": [{name, type, label}, ...]}`.
+
+## 문서·응답
+- 코드 주석·docstring은 한글 또는 영문 일관되게. 새 파일 상단에 모듈 목적·PRD 섹션 번호 있으면 명시.
+- 사용자에게 설명·안내할 때는 **한국어**로 응답한다.

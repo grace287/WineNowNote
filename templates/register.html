@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}회원가입 — WineNowNote{% endblock %}
+{% block content %}
+<div class="auth-page">
+    <div class="auth-container">
+        <div class="logo" style="text-align: center; margin-bottom: 1.5rem;">
+            <h1 style="color: var(--wine-secondary); font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem;">🍷 WineNowNote</h1>
+            <p style="color: var(--text-secondary); font-size: 14px;">와인 시음 여정을 시작하세요</p>
+        </div>
+        <div class="social-login" style="display: flex; gap: 10px; margin-bottom: 1.25rem;">
+            <button type="button" class="btn btn-secondary" style="flex:1; padding: 12px;" disabled>카카오</button>
+            <button type="button" class="btn btn-secondary" style="flex:1; padding: 12px;" disabled>구글</button>
+            <button type="button" class="btn btn-secondary" style="flex:1; padding: 12px;" disabled>네이버</button>
+        </div>
+        <div class="divider" style="text-align: center; margin: 1.25rem 0;">
+            <span style="background: #fff; padding: 0 12px; color: var(--text-tertiary); font-size: 13px;">또는 이메일로 가입</span>
+        </div>
+        <div style="border-top: 1px solid var(--border); margin: 0 0 1.25rem;"></div>
+        <div id="reg-error" class="alert alert-error" style="display: none;"></div>
+        <form id="register-form">
+            <div class="form-group">
+                <label for="reg-email">이메일</label>
+                <input type="email" id="reg-email" name="email" required placeholder="example@email.com" autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label for="reg-username">닉네임</label>
+                <input type="text" id="reg-username" name="username" required placeholder="사용할 닉네임" autocomplete="username" minlength="2" maxlength="50">
+            </div>
+            <div class="form-group">
+                <label for="reg-password">비밀번호</label>
+                <input type="password" id="reg-password" name="password" required placeholder="8자 이상 권장" autocomplete="new-password" minlength="8">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.25rem;">가입하기</button>
+        </form>
+        <p class="text-muted" style="text-align: center; margin-top: 1.25rem; font-size: 14px;">
+            이미 계정이 있으신가요? <a href="{% url 'login' %}" class="link">로그인</a>
+        </p>
+    </div>
+</div>
+<script>
+(function() {
+    const form = document.getElementById('register-form');
+    const errEl = document.getElementById('reg-error');
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        errEl.style.display = 'none';
+        const fd = new FormData(form);
+        const body = { email: fd.get('email'), username: fd.get('username'), password: fd.get('password') };
+        try {
+            const res = await fetch('/api/auth/register/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                const msg = (data.email && data.email[0]) || (data.username && data.username[0]) || (data.password && data.password[0]) || data.detail || '입력 내용을 확인해 주세요.';
+                errEl.textContent = msg;
+                errEl.style.display = 'block';
+                return;
+            }
+            if (data.tokens && data.tokens.access) {
+                localStorage.setItem('access', data.tokens.access);
+                if (data.tokens.refresh) localStorage.setItem('refresh', data.tokens.refresh);
+            }
+            window.location.href = '{% url "home" %}';
+        } catch (e) {
+            errEl.textContent = '연결할 수 없습니다. 다시 시도해 주세요.';
+            errEl.style.display = 'block';
+        }
+    });
+})();
+</script>
+{% endblock %}

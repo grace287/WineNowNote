@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}시음 노트 작성 — WineNowNote{% endblock %}
+{% block extra_css %}
+<style>
+    .form-card { max-width: 560px; }
+    .note-form-inner .form-actions .btn-close-modal { display: none !important; }
+</style>
+{% endblock %}
+{% block content %}
+<h2 style="margin: 0 0 1.25rem; font-size: 1.3rem; font-weight: 600;">시음 노트 작성하기</h2>
+<div class="card form-card">{% include "_note_form_inner.html" %}</div>
+<p class="text-muted" style="margin-top: 1rem; font-size: 14px;">
+    <a href="{% url 'home' %}" class="link">홈</a>에서 캘린더 날짜를 클릭해도 시음 노트를 작성할 수 있습니다.
+</p>
+{% endblock %}

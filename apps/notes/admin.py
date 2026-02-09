@@ -10,7 +10,19 @@ class TemplateAdmin(admin.ModelAdmin):
 
 @admin.register(TastingNote)
 class TastingNoteAdmin(admin.ModelAdmin):
-    list_display = ("wine", "user", "rating", "tasted_date", "location", "is_public", "created_at")
+    list_display = (
+        "id",
+        "wine",
+        "user",
+        "rating",
+        "tasted_date",
+        "location",
+        "pairing",
+        "is_public",
+        "created_at",
+    )
     list_filter = ("location", "is_public", "rating")
-    search_fields = ("wine__name", "notes")
+    search_fields = ("wine__name", "notes", "aroma_notes", "pairing")
     raw_id_fields = ("user", "wine", "template")
+    date_hierarchy = "tasted_date"
+    list_per_page = 20

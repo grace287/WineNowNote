@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}WineNowNote — 홈{% endblock %}
+{% block extra_css %}
+<style>
+    .hero { text-align: center; padding: 0 0 1rem; }
+    .hero h1 { font-size: 1.85rem; font-weight: 700; margin: 0 0 0.5rem; letter-spacing: -0.02em; line-height: 1.35; color: var(--text-primary); }
+    .hero .sub { color: var(--text-secondary); margin-bottom: 1rem; font-size: 1rem; }
+    .main-actions { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; max-width: 320px; margin: 0 auto 1rem; }
+    .main-actions .btn { width: 100%; text-align: center; box-sizing: border-box; }
+    .home-cal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.5rem; margin-top: 1rem; box-shadow: var(--shadow-sm); }
+    .home-cal h3 { margin: 0 0 1rem; font-size: 1.25rem; font-weight: 600; color: var(--text-primary); }
+    .home-cal-table { width: 100%; border-collapse: collapse; font-size: 15px; table-layout: fixed; }
+    .home-cal-table th, .home-cal-table td { border: 1px solid var(--border); padding: 14px 10px; text-align: center; background: #fff; min-height: 72px; }
+    .home-cal-table th { background: var(--surface); color: var(--text-secondary); font-weight: 600; font-size: 14px; }
+    .home-cal-table td { vertical-align: top; }
+    .home-cal-table td.other-month { color: var(--text-tertiary); }
+    .home-cal-table td.today { background: rgba(139, 30, 63, 0.08); font-weight: 600; }
+    .home-cal-table td.cal-day { cursor: pointer; transition: background 0.15s; }
+    .home-cal-table td.cal-day:hover { background: rgba(139, 30, 63, 0.06); }
+    .home-cal-table .day-num { display: block; margin-bottom: 6px; font-size: 1rem; }
+    .home-cal-table .day-notes { font-size: 12px; text-align: left; line-height: 1.4; }
+    .home-cal-table .day-notes .day-note-item { margin-bottom: 4px; }
+    .home-cal-table .day-notes a, .home-cal-table .day-notes .day-note-item { color: var(--wine-primary); text-decoration: none; }
+    .home-cal-table .day-notes a:hover { text-decoration: underline; }
+    .home-guest-msg { padding: 0.5rem 0; font-size: 13px; color: var(--text-secondary); }
+</style>
+{% endblock %}
+{% block content %}
+<section class="hero">
+    <h1>한국 와인 애호가를 위한<br>와인 시음 플랫폼</h1>
+    <p class="sub">시음 노트를 기록하고, 캘린더로 되돌아보세요. 로그인 없이 둘러보기 가능합니다.</p>
+    <div class="main-actions">
+        <button type="button" class="btn btn-primary" id="home-open-note-modal">✏️ 시음 노트 작성하기</button>
+    </div>
+</section>
+
+<section class="home-cal">
+    <h3 id="home-cal-title">이번 달</h3>
+    <p id="home-cal-guest" class="home-guest-msg" style="display: none;">로그인하면 이 달의 시음 노트가 날짜별로 표시됩니다. 날짜를 클릭하면 노트를 작성할 수 있습니다.</p>
+    <table class="home-cal-table">
+        <thead><tr><th>일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th></tr></thead>
+        <tbody id="home-cal-body"></tbody>
+    </table>
+</section>
+
+<div id="note-form-modal" class="note-modal-overlay">
+    <div class="note-modal-box">
+        <div class="note-modal-header">
+            <h3>시음 노트 작성</h3>
+            <button type="button" class="note-modal-close" aria-label="닫기">×</button>
+        </div>
+        <div class="note-modal-body">{% include "_note_form_inner.html" %}</div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const access = localStorage.getItem('access');
+    const tbody = document.getElementById('home-cal-body');
+    const titleEl = document.getElementById('home-cal-title');
+    const guestMsg = document.getElementById('home-cal-guest');
+    const modal = document.getElementById('note-form-modal');
+
+    function openNoteFormModal(dateStr) {
+        if (!modal) return;
+        var dateInput = document.getElementById('tasted_date');
+        if (dateInput) dateInput.value = dateStr || new Date().toISOString().slice(0, 10);
+        modal.style.display = 'flex';
+    }
+    function closeNoteFormModal() {
+        if (modal) modal.style.display = 'none';
+    }
+    window.openNoteFormModal = openNoteFormModal;
+
+    document.getElementById('home-open-note-modal').onclick = function() { openNoteFormModal(); };
+    modal.querySelector('.note-modal-close').onclick = closeNoteFormModal;
+    modal.addEventListener('click', function(e) { if (e.target === modal) closeNoteFormModal(); });
+
+    const now = new Date();
+    let year = now.getFullYear();
+    let month = now.getMonth() + 1;
+
+    function firstDay(y, m) { return new Date(y, m - 1, 1).getDay(); }
+    function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
+    function daysInPrev(y, m) { return m === 1 ? new Date(y - 1, 11, 0).getDate() : new Date(y, m - 2, 0).getDate(); }
+
+    function buildGrid(y, m, daysData) {
+        const first = firstDay(y, m);
+        const total = daysInMonth(y, m);
+        const prevTotal = daysInPrev(y, m);
+        const today = new Date();
+        let row = [];
+        const rows = [];
+        for (let i = 0; i < first; i++) {
+            const d = prevTotal - first + i + 1;
+            const prevM = m === 1 ? 12 : m - 1;
+            const prevY = m === 1 ? y - 1 : y;
+            const dateStr = prevY + '-' + String(prevM).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+            row.push('<td class="other-month cal-day" data-date="' + dateStr + '"><span class="day-num">' + d + '</span><div class="day-notes"></div></td>');
+        }
+        for (let day = 1; day <= total; day++) {
+            const dateStr = y + '-' + String(m).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+            const notes = (daysData && daysData[dateStr]) || [];
+            const isToday = today.getFullYear() === y && today.getMonth() + 1 === m && today.getDate() === day;
+            let notesHtml = '';
+            notes.forEach(function(n) {
+                var name = (n.wine_name || '노트');
+                var rating = (n.rating != null ? ' ★' + n.rating : '');
+                notesHtml += '<div class="day-note-item">' + name + rating + '</div>';
+            });
+            row.push('<td class="cal-day' + (isToday ? ' today' : '') + '" data-date="' + dateStr + '"><span class="day-num">' + day + '</span><div class="day-notes">' + notesHtml + '</div></td>');
+            if (row.length === 7) { rows.push('<tr>' + row.join('') + '</tr>'); row = []; }
+        }
+        if (row.length) {
+            const nextM = m === 12 ? 1 : m + 1;
+            const nextY = m === 12 ? y + 1 : y;
+            for (let i = row.length; i < 7; i++) {
+                const d = i - row.length + 1;
+                const dateStr = nextY + '-' + String(nextM).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+                row.push('<td class="other-month cal-day" data-date="' + dateStr + '"><span class="day-num">' + d + '</span><div class="day-notes"></div></td>');
+            }
+            rows.push('<tr>' + row.join('') + '</tr>');
+        }
+        return rows.join('');
+    }
+
+    function renderCalendar() {
+        titleEl.textContent = year + '년 ' + month + '월';
+        guestMsg.style.display = access ? 'none' : 'block';
+        if (!access) {
+            tbody.innerHTML = buildGrid(year, month, {});
+            tbody.querySelectorAll('.cal-day').forEach(function(td) {
+                td.addEventListener('click', function() { openNoteFormModal(td.getAttribute('data-date')); });
+            });
+            return;
+        }
+        fetch('/api/tasting-notes/calendar/?year=' + year + '&month=' + month, {
+            headers: { 'Authorization': 'Bearer ' + access }
+        })
+        .then(function(r) {
+            if (r.status === 401) return {};
+            return r.json();
+        })
+        .then(function(data) {
+            var byDate = {};
+            if (data.days) data.days.forEach(function(d) { byDate[d.date] = d.notes || []; });
+            tbody.innerHTML = buildGrid(year, month, byDate);
+            tbody.querySelectorAll('.cal-day').forEach(function(td) {
+                td.addEventListener('click', function() { openNoteFormModal(td.getAttribute('data-date')); });
+            });
+        })
+        .catch(function() {
+            tbody.innerHTML = buildGrid(year, month, {});
+            tbody.querySelectorAll('.cal-day').forEach(function(td) {
+                td.addEventListener('click', function() { openNoteFormModal(td.getAttribute('data-date')); });
+            });
+        });
+    }
+
+    window.addEventListener('noteFormSaved', function() { renderCalendar(); });
+    renderCalendar();
+})();
+</script>
+{% endblock %}

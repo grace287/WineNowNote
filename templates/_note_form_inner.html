@@ -1,0 +1,314 @@
+{% comment %}공통 시음 노트 폼 — 5단계 페이지네이션, 모달/풀페이지 공용 {% endcomment %}
+<div id="form-guest-notice" class="form-guest-notice" style="display: none;">
+    저장하려면 로그인이 필요합니다. <a href="{% url 'login' %}">로그인</a> · <a href="{% url 'register' %}">회원가입</a>
+</div>
+<div id="form-success" class="alert alert-success" style="display: none;">저장되었습니다.</div>
+<div id="form-error" class="alert alert-error" style="display: none;"></div>
+<form id="note-form" class="note-form-inner note-form-steps">
+    <div class="steps-bar">
+        <div class="step active" data-step="1"><span class="step-num">1</span><span class="step-label">기본 정보</span></div>
+        <div class="step" data-step="2"><span class="step-num">2</span><span class="step-label">외관 평가</span></div>
+        <div class="step" data-step="3"><span class="step-num">3</span><span class="step-label">아로마</span></div>
+        <div class="step" data-step="4"><span class="step-num">4</span><span class="step-label">맛</span></div>
+        <div class="step" data-step="5"><span class="step-num">5</span><span class="step-label">종합평가</span></div>
+    </div>
+
+    <div class="step-content active" data-step="1">
+        <div class="form-section">
+            <div class="form-section-title">기본 정보</div>
+            <div class="form-group">
+                <label for="wine-select">와인 *</label>
+                <select name="wine" id="wine-select" required>
+                    <option value="">— 와인 선택 —</option>
+                </select>
+                <p id="wine-login-hint" class="text-muted" style="margin-top: 6px; font-size: 12px; display: none;">로그인하면 와인 목록에서 선택할 수 있습니다.</p>
+            </div>
+            <div class="form-row-2">
+                <div class="form-group">
+                    <label for="tasted_date">시음일 *</label>
+                    <input type="date" name="tasted_date" id="tasted_date" required>
+                </div>
+                <div class="form-group">
+                    <label for="rating">평점 (1~5) *</label>
+                    <input type="number" name="rating" id="rating" min="1" max="5" value="3" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="location">장소</label>
+                <select name="location" id="location">
+                    <option value="other">기타</option>
+                    <option value="home">집</option>
+                    <option value="restaurant">레스토랑</option>
+                    <option value="bar">바</option>
+                    <option value="event">이벤트</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="location_detail">장소 상세</label>
+                <input type="text" name="location_detail" id="location_detail" placeholder="예: OO 레스토랑">
+            </div>
+        </div>
+    </div>
+
+    <div class="step-content" data-step="2">
+        <div class="form-section">
+            <div class="form-section-title">외관 평가</div>
+            <div class="form-group">
+                <label>색의 강도</label>
+                <div class="slider-wrap">
+                    <input type="range" name="appearance_intensity" id="appearance_intensity" min="1" max="5" value="3" class="slider-input">
+                    <span class="slider-val" id="val-appearance_intensity">3</span>
+                </div>
+                <div class="slider-labels">
+                    <span>매우 연함</span><span>연함</span><span>보통</span><span>진함</span><span>매우 진함</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>투명도</label>
+                <div class="slider-wrap">
+                    <input type="range" name="appearance_clarity_slider" id="appearance_clarity_slider" min="1" max="3" value="2" class="slider-input">
+                </div>
+                <div class="slider-labels slider-labels-3">
+                    <span>탁함</span><span>흐림</span><span>맑음</span>
+                </div>
+                <input type="hidden" name="appearance_clarity" id="appearance_clarity" value="hazy">
+            </div>
+        </div>
+    </div>
+
+    <div class="step-content" data-step="3">
+        <div class="form-section">
+            <div class="form-section-title">아로마</div>
+            <div class="form-group">
+                <label>향 강도</label>
+                <div class="slider-wrap">
+                    <input type="range" name="aroma_intensity" id="aroma_intensity" min="1" max="5" value="3" class="slider-input">
+                    <span class="slider-val" id="val-aroma_intensity">3</span>
+                </div>
+                <div class="slider-labels">
+                    <span>매우 약함</span><span>약함</span><span>보통</span><span>강함</span><span>매우 강함</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="aroma_notes">아로마 노트</label>
+                <textarea name="aroma_notes" id="aroma_notes" placeholder="감지한 향을 메모해 보세요" rows="3"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="step-content" data-step="4">
+        <div class="form-section">
+            <div class="form-section-title">맛</div>
+            <div class="taste-sliders">
+                <div class="form-group">
+                    <label>바디</label>
+                    <div class="slider-wrap"><input type="range" name="body" min="1" max="5" value="3" class="slider-input"><span class="slider-val" id="val-body">3</span></div>
+                </div>
+                <div class="form-group">
+                    <label>산도</label>
+                    <div class="slider-wrap"><input type="range" name="acidity" min="1" max="5" value="3" class="slider-input"><span class="slider-val" id="val-acidity">3</span></div>
+                </div>
+                <div class="form-group">
+                    <label>타닌</label>
+                    <div class="slider-wrap"><input type="range" name="tannin" min="1" max="5" value="3" class="slider-input"><span class="slider-val" id="val-tannin">3</span></div>
+                </div>
+                <div class="form-group">
+                    <label>당도</label>
+                    <div class="slider-wrap"><input type="range" name="sweetness" min="1" max="5" value="3" class="slider-input"><span class="slider-val" id="val-sweetness">3</span></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="pairing">페어링 음식</label>
+                <input type="text" name="pairing" id="pairing" placeholder="예: 스테이크, 치즈">
+            </div>
+        </div>
+    </div>
+
+    <div class="step-content" data-step="5">
+        <div class="form-section">
+            <div class="form-section-title">종합 평가</div>
+            <div class="form-group">
+                <label for="notes">종합 메모</label>
+                <textarea name="notes" id="notes" placeholder="전체적인 인상, 추천 여부 등을 자유롭게 적어 주세요" rows="4"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-step-actions">
+        <button type="button" class="btn btn-secondary btn-step-prev" style="display: none;">← 이전</button>
+        <button type="button" class="btn btn-primary btn-step-next">다음 →</button>
+        <button type="submit" class="btn btn-primary btn-step-submit" style="display: none;">저장</button>
+        <button type="button" class="btn btn-secondary btn-close-modal" style="display: none;">취소</button>
+        <a href="{% url 'home' %}" class="btn btn-secondary form-cancel-link" style="display: none;">취소</a>
+    </div>
+</form>
+<script>
+(function() {
+    const access = localStorage.getItem('access');
+    const formEl = document.getElementById('note-form');
+    if (!formEl) return;
+    const guestNotice = document.getElementById('form-guest-notice');
+    const formSuccess = document.getElementById('form-success');
+    const formError = document.getElementById('form-error');
+    const wineSelect = document.getElementById('wine-select');
+    const wineLoginHint = document.getElementById('wine-login-hint');
+    const modal = document.getElementById('note-form-modal');
+    const isInModal = modal && modal.contains(formEl);
+
+    var currentStep = 1;
+    var totalSteps = 5;
+    var steps = formEl.querySelectorAll('.step');
+    var contents = formEl.querySelectorAll('.step-content');
+    var btnPrev = formEl.querySelector('.btn-step-prev');
+    var btnNext = formEl.querySelector('.btn-step-next');
+    var btnSubmit = formEl.querySelector('.btn-step-submit');
+
+    function showStep(n) {
+        currentStep = n;
+        steps.forEach(function(s) {
+            s.classList.toggle('active', parseInt(s.getAttribute('data-step'), 10) === n);
+        });
+        contents.forEach(function(c) {
+            c.classList.toggle('active', parseInt(c.getAttribute('data-step'), 10) === n);
+        });
+        btnPrev.style.display = n === 1 ? 'none' : 'inline-block';
+        btnNext.style.display = n === totalSteps ? 'none' : 'inline-block';
+        btnSubmit.style.display = n === totalSteps ? 'inline-block' : 'none';
+    }
+    btnPrev.onclick = function() { if (currentStep > 1) showStep(currentStep - 1); };
+    btnNext.onclick = function() {
+        if (currentStep < totalSteps) showStep(currentStep + 1);
+    };
+    steps.forEach(function(s) {
+        s.onclick = function() {
+            var n = parseInt(s.getAttribute('data-step'), 10);
+            if (n <= currentStep || n === 1) showStep(n);
+        };
+    });
+
+    var clarityMap = { 1: 'cloudy', 2: 'hazy', 3: 'clear' };
+    var claritySlider = document.getElementById('appearance_clarity_slider');
+    var clarityHidden = document.getElementById('appearance_clarity');
+    if (claritySlider && clarityHidden) {
+        claritySlider.addEventListener('input', function() {
+            clarityHidden.value = clarityMap[parseInt(this.value, 10)] || 'hazy';
+        });
+    }
+
+    function authHeaders() {
+        var h = { 'Content-Type': 'application/json' };
+        if (access) h['Authorization'] = 'Bearer ' + access;
+        return h;
+    }
+
+    var today = new Date().toISOString().slice(0, 10);
+    var dateInput = formEl.querySelector('[name="tasted_date"]');
+    if (dateInput) dateInput.value = today;
+    if (!access) {
+        if (guestNotice) guestNotice.style.display = 'block';
+        if (wineSelect) {
+            wineSelect.innerHTML = '<option value="">— 로그인 후 와인 목록에서 선택 —</option>';
+            wineSelect.removeAttribute('required');
+        }
+        if (wineLoginHint) wineLoginHint.style.display = 'block';
+    } else {
+        fetch('/api/wines/', { headers: authHeaders() })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var list = data.results || data || [];
+                if (!wineSelect) return;
+                list.forEach(function(w) {
+                    var opt = document.createElement('option');
+                    opt.value = w.id;
+                    opt.textContent = (w.name || '') + (w.vintage ? ' (' + w.vintage + ')' : '');
+                    wineSelect.appendChild(opt);
+                });
+            })
+            .catch(function() {});
+    }
+
+    ['appearance_intensity','aroma_intensity','body','acidity','tannin','sweetness'].forEach(function(name) {
+        var input = formEl.querySelector('[name="' + name + '"]');
+        var span = document.getElementById('val-' + name);
+        if (input && span) input.addEventListener('input', function() { span.textContent = input.value; });
+    });
+
+    var closeBtn = formEl.querySelector('.btn-close-modal');
+    var cancelLink = formEl.querySelector('.form-cancel-link');
+    if (closeBtn && isInModal) {
+        closeBtn.style.display = 'inline-block';
+        closeBtn.onclick = function() { if (modal) modal.style.display = 'none'; };
+    }
+    if (cancelLink && !isInModal) cancelLink.style.display = 'inline-block';
+
+    formEl.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (formError) formError.style.display = 'none';
+        if (formSuccess) formSuccess.style.display = 'none';
+
+        if (!access) {
+            if (formError) {
+                formError.innerHTML = '저장하려면 로그인이 필요합니다. <a href="{% url "login" %}" class="link">로그인</a> · <a href="{% url "register" %}" class="link">회원가입</a>';
+                formError.style.display = 'block';
+            }
+            return;
+        }
+
+        var fd = new FormData(formEl);
+        var wineVal = fd.get('wine');
+        if (!wineVal || !parseInt(wineVal, 10)) {
+            if (formError) { formError.textContent = '와인을 선택해 주세요.'; formError.style.display = 'block'; }
+            return;
+        }
+        var tastedDate = fd.get('tasted_date');
+        var body = {
+            wine: parseInt(wineVal, 10),
+            tasted_date: tastedDate,
+            rating: parseInt(fd.get('rating'), 10),
+            location: fd.get('location') || 'other',
+            location_detail: fd.get('location_detail') || '',
+            appearance_clarity: fd.get('appearance_clarity') || '',
+            appearance_intensity: fd.get('appearance_intensity') ? parseInt(fd.get('appearance_intensity'), 10) : null,
+            aroma_intensity: fd.get('aroma_intensity') ? parseInt(fd.get('aroma_intensity'), 10) : null,
+            aroma_notes: fd.get('aroma_notes') || '',
+            body: fd.get('body') ? parseInt(fd.get('body'), 10) : null,
+            acidity: fd.get('acidity') ? parseInt(fd.get('acidity'), 10) : null,
+            tannin: fd.get('tannin') ? parseInt(fd.get('tannin'), 10) : null,
+            sweetness: fd.get('sweetness') ? parseInt(fd.get('sweetness'), 10) : null,
+            pairing: fd.get('pairing') || '',
+            notes: fd.get('notes') || '',
+            custom_fields: {},
+            photos: [],
+            is_public: false
+        };
+        fetch('/api/tasting-notes/', {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify(body)
+        })
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(o) {
+            if (o.ok) {
+                if (formSuccess) { formSuccess.style.display = 'block'; formSuccess.textContent = '저장되었습니다.'; }
+                formEl.reset();
+                var di = formEl.querySelector('[name="tasted_date"]');
+                if (di) di.value = today;
+                showStep(1);
+                if (isInModal && modal) {
+                    modal.style.display = 'none';
+                    var wineName = (o.data && o.data.wine_name) || (wineSelect && wineSelect.options[wineSelect.selectedIndex]) ? wineSelect.options[wineSelect.selectedIndex].text : '';
+                    window.dispatchEvent(new CustomEvent('noteFormSaved', { detail: { date: tastedDate, wine_name: wineName, rating: body.rating } }));
+                }
+            } else {
+                if (formError) {
+                    formError.textContent = o.data.detail || (o.data.wine && o.data.wine[0]) || JSON.stringify(o.data);
+                    formError.style.display = 'block';
+                }
+            }
+        })
+        .catch(function(e) {
+            if (formError) { formError.textContent = '저장 실패: ' + e.message; formError.style.display = 'block'; }
+        });
+    });
+})();
+</script>

@@ -1,4 +1,4 @@
 # WineNowNote — 기본은 개발 환경 기준
 # 사용: pip install -r requirements.txt
-# 상세: requirements/base.txt, requirements/dev.txt, requirements/prod.txt
--r requirements/dev.txt
+# 상세: requirements/base.txt, requirements/development.txt, requirements/production.txt
+-r requirements/development.txt
